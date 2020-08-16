@@ -6,5 +6,9 @@
   "description": "Attribute for serialized reference inspector",
   "keywords": [ "attribute", "inspector", "editor" ],
   "category": "editor extensions",
-  "dependencies": {}
+  "dependencies": {},
+  "author": {
+    "name": "Lexscite",
+    "email": "lexscite@gmail.com"
+  }
 }
