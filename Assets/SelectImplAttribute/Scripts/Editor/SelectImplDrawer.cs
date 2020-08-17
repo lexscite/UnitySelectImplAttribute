@@ -6,100 +6,104 @@ using System.Linq;
 
 namespace PaperStag
 {
-    [CustomPropertyDrawer(typeof(SelectImplAttribute))]
-    public class SelectImplDrawer : PropertyDrawer
+[CustomPropertyDrawer(typeof(SelectImplAttribute))]
+public class SelectImplDrawer : PropertyDrawer
+{
+    private class Data
     {
-        private class Data
-        {
-            public SerializedProperty property;
-            public List<Type> impls;
-            public int index;
-        }
+        public SerializedProperty Property;
+        public List<Type> Impls;
+        public int Index;
+    }
 
-        private readonly Dictionary<string, Data> _datas
-            = new Dictionary<string, Data>();
+    private readonly Dictionary<string, Data> _dataDict
+        = new Dictionary<string, Data>();
 
-        public override void OnGUI(Rect position,
-            SerializedProperty property,
-            GUIContent label)
+    public override void OnGUI(Rect position,
+        SerializedProperty property,
+        GUIContent label)
+    {
+        if (!_dataDict.TryGetValue(property.propertyPath, out Data data))
         {
-            if (!_datas.TryGetValue(property.propertyPath, out Data data))
+            data = new Data();
+            _dataDict[property.propertyPath] = data;
+            data.Property = property;
+
+            RefreshImpls(data);
+
+            if (data.Property.managedReferenceFullTypename
+                != string.Empty)
             {
-                data = new Data();
-                _datas[property.propertyPath] = data;
-                data.property = property;
+                var names =
+                    property.managedReferenceFullTypename.Split(' ');
+                var fullType = Type.GetType($"{names[1]}, {names[0]}");
 
-                RefreshImpls(data);
+                var refType = data.Impls.FirstOrDefault(
+                    impl => impl == fullType);
 
-                if (property.managedReferenceFullTypename != string.Empty)
-                {
-                    var names = property.managedReferenceFullTypename.Split(' ');
-                    var fullType = Type.GetType($"{names[1]}, {names[0]}");
-
-                    var refType = data.impls.FirstOrDefault(
-                        impl => impl == fullType);
-
-                    var index = data.impls.IndexOf(refType);
-                    data.index = index;
-                }
-                else
-                {
-                    Choose(data, property);
-                }
+                var index = data.Impls.IndexOf(refType);
+                data.Index = index;
             }
-
-            var y = position.y
-                + position.height
-                - EditorGUIUtility.singleLineHeight;
-            var height = EditorGUIUtility.singleLineHeight;
-
-            EditorGUI.BeginChangeCheck();
-            data.index = EditorGUI.Popup(new Rect(
-                new Vector2(position.x, y),
-                new Vector2(position.width, height)),
-                data.index,
-                data.impls.Select(impl => impl.Name).ToArray());
-            var popupValueChanged = EditorGUI.EndChangeCheck();
-
-            if (popupValueChanged)
+            else
             {
                 Choose(data, property);
             }
-
-            EditorGUI.PropertyField(position, property, true);
         }
 
-        public static List<Type> GetImplementations(Type interfaceType)
+        var y = position.y
+            + position.height;
+        var height = EditorGUIUtility.singleLineHeight;
+
+        EditorGUI.BeginChangeCheck();
+        data.Index = EditorGUI.Popup(new Rect(new Vector2(position.x, y),
+                new Vector2(position.width, height)),
+            data.Index,
+            data.Impls.Select(impl => impl.Name).ToArray());
+        var popupValueChanged = EditorGUI.EndChangeCheck();
+
+        if (popupValueChanged)
         {
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly => assembly.GetTypes());
-            return types.Where(p =>interfaceType.IsAssignableFrom(p)
-            && !p.IsAbstract && !p.IsInterface)
-                .ToList();
+            Choose(data, property);
         }
 
-        private void Choose(Data data, SerializedProperty property)
-        {
-            property.managedReferenceValue = Activator.CreateInstance(
-                data.impls[data.index]);
-        }
+        position.y += EditorGUIUtility.singleLineHeight;
 
-        private void RefreshImpls(Data data)
-        {
-            data.impls = GetImplementations(
-                (attribute as SelectImplAttribute).fieldType)
-                .Where(impl =>
-                !impl.IsSubclassOf(typeof(UnityEngine.Object)))
-                .ToList();
-        }
-
-        public override float GetPropertyHeight(SerializedProperty property,
-            GUIContent label)
-        {
-            var result = EditorGUI.GetPropertyHeight(property, label, true);
-            result += EditorGUIUtility.singleLineHeight;
-            result += EditorGUIUtility.standardVerticalSpacing;
-            return result;
-        }
+        EditorGUI.PropertyField(position, property, true);
     }
+
+    private static IEnumerable<Type> GetImplementations(
+        Type interfaceType)
+    {
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(assembly => assembly.GetTypes());
+        return types.Where(p => interfaceType.IsAssignableFrom(p)
+                && !p.IsAbstract
+                && !p.IsInterface)
+            .ToList();
+    }
+
+    private void Choose(Data data, SerializedProperty property)
+    {
+        property.managedReferenceValue =
+            Activator.CreateInstance(data.Impls[data.Index]);
+    }
+
+    private void RefreshImpls(Data data)
+    {
+        data.Impls = GetImplementations(
+                (attribute as SelectImplAttribute)?.fieldType)
+            .Where(impl =>
+                !impl.IsSubclassOf(typeof(UnityEngine.Object)))
+            .ToList();
+    }
+
+    public override float GetPropertyHeight(SerializedProperty property,
+        GUIContent label)
+    {
+        var result = EditorGUI.GetPropertyHeight(property, label, true);
+        result += EditorGUIUtility.singleLineHeight;
+        result += EditorGUIUtility.standardVerticalSpacing;
+        return result;
+    }
+}
 }
