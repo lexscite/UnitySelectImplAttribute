@@ -1,11 +1,7 @@
 {
-    "name": "Editor",
-    "references": [
-        "Runtime"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "name": "Runtime",
+    "references": [],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
