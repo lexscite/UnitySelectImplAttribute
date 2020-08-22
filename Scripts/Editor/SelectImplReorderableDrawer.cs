@@ -6,8 +6,8 @@ using System.Linq;
 
 namespace PaperStag
 {
-[CustomPropertyDrawer(typeof(SelectImplAttribute))]
-public class SelectImplDrawer : PropertyDrawer
+[CustomPropertyDrawer(typeof(SelectImplReorderableAttribute))]
+public class SelectImplReorderableDrawer : PropertyDrawer
 {
     private class Data
     {
@@ -50,7 +50,8 @@ public class SelectImplDrawer : PropertyDrawer
             }
         }
 
-        var y = position.y;
+        var y = position.y
+            + position.height;
         var height = EditorGUIUtility.singleLineHeight;
 
         EditorGUI.BeginChangeCheck();
@@ -90,7 +91,7 @@ public class SelectImplDrawer : PropertyDrawer
     private void RefreshImpls(Data data)
     {
         data.Impls = GetImplementations(
-                (attribute as SelectImplAttribute)?.fieldType)
+                (attribute as SelectImplReorderableAttribute)?.fieldType)
             .Where(impl =>
                 !impl.IsSubclassOf(typeof(UnityEngine.Object)))
             .ToList();
