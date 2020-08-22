@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.dbrizov.naughtyattributes": {
+      "version": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "d0be92615128a89f2d6b95b8e3435630d5432b9d"
+    },
     "com.unity.collab-proxy": {
       "version": "1.2.16",
       "depth": 0,
